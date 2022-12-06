@@ -1,0 +1,46 @@
+#!/bin/bash
+echo -n "Дата: "
+date +%d+%m+%y
+echo -n "Имя пользователя: "
+whoami
+echo -n "Доменное имя ПК "
+hostname
+
+echo "Процессор "
+lscpu | grep "Имя модели"
+lscpu | grep "Архитектура"
+lscpu | grep "CPU МГц"
+lscpu | grep "CPU(s)"
+lscpu | grep "Потоков на ядро"
+
+echo "ОЗУ: "
+echo -n "ОЗУ всего: "
+free -h | grep "Память" | xargs | cut -d " " -f 2
+echo -n "ОЗУ свободно: "
+free -h | grep "Память" | xargs | cut -d " " -f 4
+
+echo "Жесткий диск: "
+echo -n "Всего: "
+df -hT | grep "/dev/sda3" | xargs | cut -d " " -f 3
+echo -n "Доступно: "
+df -hT | grep "/dev/sda3" | xargs | cut -d " " -f 5
+echo -n "Смонтировано в корневую директорию: "
+df -hT | grep "/dev/sda3" | xargs | cut -d " " -f 1
+echo -n "SWAP всего: "
+free -h | grep "Подкачка" | xargs | cut -d " " -f 2
+echo -n "SWAP доступно: "
+free -h | grep "Подкачка" | xargs | cut -d " " -f 4
+
+echo "Сетевые интерфейсы: " 
+
+arr_interfaces=$(ls /sys/class/net/)
+num=1
+printf "#\tName\tMAC\t\t\tIP\t\tSpeed\n"
+for item in $arr_interfaces
+do
+    mac=$(cat /sys/class/net/$item/address)
+    ip=$(ip addr show dev $item | grep -E 'inet ' | tr -d "\n" | awk '{print $2}')
+    speed=$(sudo ethtool $item | grep -E 'Speed' | tr -d "\n" | awk '{print $2}')
+    printf "%d.\t%s\t%s\t%s\t%s\n" $num $item $mac $ip $speed
+    num=$(($num+1))
+done
